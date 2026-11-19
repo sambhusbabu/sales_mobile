@@ -1,0 +1,338 @@
+{
+ "actions": [],
+ "creation": "2026-11-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "access_tab",
+  "allowed_roles",
+  "modules_tab",
+  "crm_section",
+  "enable_dashboard",
+  "enable_lead",
+  "enable_deal",
+  "enable_contact",
+  "column_break_crm",
+  "enable_organization",
+  "enable_notes",
+  "enable_tasks",
+  "hrms_section",
+  "enable_hrms_home",
+  "enable_attendance",
+  "enable_leave",
+  "enable_expense_claim",
+  "column_break_hrms",
+  "enable_employee_advance",
+  "enable_salary_slip",
+  "enable_profile",
+  "enable_notifications",
+  "branding_tab",
+  "app_name",
+  "logo",
+  "column_break_brand",
+  "primary_color",
+  "accent_color",
+  "navigation_tab",
+  "tabs",
+  "fields_tab",
+  "fields",
+  "update_tab",
+  "minimum_app_version",
+  "force_update",
+  "update_message",
+  "column_break_update",
+  "ios_minimum_version",
+  "ios_latest_version",
+  "ios_store_url",
+  "android_minimum_version",
+  "android_latest_version",
+  "android_store_url",
+  "push_tab",
+  "enable_push_notifications",
+  "expo_access_token"
+ ],
+ "fields": [
+  {
+   "fieldname": "access_tab",
+   "fieldtype": "Tab Break",
+   "label": "Access"
+  },
+  {
+   "description": "Leave this empty to allow every logged-in user. System Manager can always open the app.",
+   "fieldname": "allowed_roles",
+   "fieldtype": "Table",
+   "label": "Allowed Roles",
+   "options": "Sales Mobile Role"
+  },
+  {
+   "fieldname": "modules_tab",
+   "fieldtype": "Tab Break",
+   "label": "Modules"
+  },
+  {
+   "fieldname": "crm_section",
+   "fieldtype": "Section Break",
+   "label": "CRM"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_dashboard",
+   "fieldtype": "Check",
+   "label": "Dashboard"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_lead",
+   "fieldtype": "Check",
+   "label": "Lead"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_deal",
+   "fieldtype": "Check",
+   "label": "Deal"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_contact",
+   "fieldtype": "Check",
+   "label": "Contact"
+  },
+  {
+   "fieldname": "column_break_crm",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_organization",
+   "fieldtype": "Check",
+   "label": "Organization"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_notes",
+   "fieldtype": "Check",
+   "label": "Notes"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_tasks",
+   "fieldtype": "Check",
+   "label": "Tasks"
+  },
+  {
+   "fieldname": "hrms_section",
+   "fieldtype": "Section Break",
+   "label": "HRMS"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_hrms_home",
+   "fieldtype": "Check",
+   "label": "Home"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_attendance",
+   "fieldtype": "Check",
+   "label": "Attendance"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_leave",
+   "fieldtype": "Check",
+   "label": "Leave"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_expense_claim",
+   "fieldtype": "Check",
+   "label": "Expense Claim"
+  },
+  {
+   "fieldname": "column_break_hrms",
+   "fieldtype": "Column Break"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_employee_advance",
+   "fieldtype": "Check",
+   "label": "Employee Advance"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_salary_slip",
+   "fieldtype": "Check",
+   "label": "Salary Slip"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_profile",
+   "fieldtype": "Check",
+   "label": "Profile"
+  },
+  {
+   "default": "1",
+   "fieldname": "enable_notifications",
+   "fieldtype": "Check",
+   "label": "Notifications"
+  },
+  {
+   "fieldname": "branding_tab",
+   "fieldtype": "Tab Break",
+   "label": "Branding"
+  },
+  {
+   "default": "Sales Mobile",
+   "fieldname": "app_name",
+   "fieldtype": "Data",
+   "label": "App Name"
+  },
+  {
+   "fieldname": "logo",
+   "fieldtype": "Attach Image",
+   "label": "Logo"
+  },
+  {
+   "fieldname": "column_break_brand",
+   "fieldtype": "Column Break"
+  },
+  {
+   "description": "Hex color, for example #1F6FEB",
+   "fieldname": "primary_color",
+   "fieldtype": "Data",
+   "label": "Primary Color"
+  },
+  {
+   "description": "Hex color, for example #0F766E",
+   "fieldname": "accent_color",
+   "fieldtype": "Data",
+   "label": "Accent Color"
+  },
+  {
+   "fieldname": "navigation_tab",
+   "fieldtype": "Tab Break",
+   "label": "Navigation"
+  },
+  {
+   "description": "Leave this empty to use the default tabs for the modules that are turned on.",
+   "fieldname": "tabs",
+   "fieldtype": "Table",
+   "label": "Tabs",
+   "options": "Sales Mobile Tab"
+  },
+  {
+   "fieldname": "fields_tab",
+   "fieldtype": "Tab Break",
+   "label": "Fields"
+  },
+  {
+   "description": "Leave this empty to return every field the CRM or HRMS screen already returns. Add rows to limit list columns and detail fields.",
+   "fieldname": "fields",
+   "fieldtype": "Table",
+   "label": "Fields",
+   "options": "Sales Mobile Field"
+  },
+  {
+   "fieldname": "update_tab",
+   "fieldtype": "Tab Break",
+   "label": "App Update"
+  },
+  {
+   "description": "Used when the platform-specific minimum is empty.",
+   "fieldname": "minimum_app_version",
+   "fieldtype": "Data",
+   "label": "Minimum App Version"
+  },
+  {
+   "default": "0",
+   "description": "Block the app when the installed version is older than the minimum.",
+   "fieldname": "force_update",
+   "fieldtype": "Check",
+   "label": "Force Update"
+  },
+  {
+   "fieldname": "update_message",
+   "fieldtype": "Small Text",
+   "label": "Update Message"
+  },
+  {
+   "fieldname": "column_break_update",
+   "fieldtype": "Column Break"
+  },
+  {
+   "fieldname": "ios_minimum_version",
+   "fieldtype": "Data",
+   "label": "iOS Minimum Version"
+  },
+  {
+   "fieldname": "ios_latest_version",
+   "fieldtype": "Data",
+   "label": "iOS Latest Version"
+  },
+  {
+   "fieldname": "ios_store_url",
+   "fieldtype": "Data",
+   "label": "iOS Store URL"
+  },
+  {
+   "fieldname": "android_minimum_version",
+   "fieldtype": "Data",
+   "label": "Android Minimum Version"
+  },
+  {
+   "fieldname": "android_latest_version",
+   "fieldtype": "Data",
+   "label": "Android Latest Version"
+  },
+  {
+   "fieldname": "android_store_url",
+   "fieldtype": "Data",
+   "label": "Android Store URL"
+  },
+  {
+   "fieldname": "push_tab",
+   "fieldtype": "Tab Break",
+   "label": "Push Notifications"
+  },
+  {
+   "default": "0",
+   "fieldname": "enable_push_notifications",
+   "fieldtype": "Check",
+   "label": "Enable Push Notifications"
+  },
+  {
+   "description": "Server-side Expo access token. The mobile app never receives this value.",
+   "fieldname": "expo_access_token",
+   "fieldtype": "Password",
+   "label": "Expo Access Token"
+  }
+ ],
+ "issingle": 1,
+ "links": [],
+ "modified": "2026-11-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Sales Mobile",
+ "name": "Sales Mobile Settings",
+ "owner": "Administrator",
+ "permissions": [
+  {
+   "create": 1,
+   "delete": 1,
+   "email": 1,
+   "print": 1,
+   "read": 1,
+   "role": "System Manager",
+   "share": 1,
+   "write": 1
+  },
+  {
+   "read": 1,
+   "role": "All"
+  }
+ ],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

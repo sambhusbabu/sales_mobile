@@ -1,0 +1,69 @@
+{
+ "actions": [],
+ "creation": "2026-11-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "tab_key",
+  "label",
+  "module",
+  "icon",
+  "enabled",
+  "show_on_home"
+ ],
+ "fields": [
+  {
+   "fieldname": "tab_key",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Tab Key",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label",
+   "reqd": 1
+  },
+  {
+   "fieldname": "module",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "Module",
+   "options": "dashboard\nlead\ndeal\ncontact\norganization\nnotes\ntasks\nhrms_home\nattendance\nleave\nexpense_claim\nemployee_advance\nsalary_slip\nprofile\nnotifications",
+   "reqd": 1
+  },
+  {
+   "fieldname": "icon",
+   "fieldtype": "Data",
+   "label": "Icon"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  },
+  {
+   "default": "0",
+   "fieldname": "show_on_home",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Show on Home"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Sales Mobile",
+ "name": "Sales Mobile Tab",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}

@@ -1,0 +1,63 @@
+{
+ "actions": [],
+ "creation": "2026-11-19 12:00:00.000000",
+ "doctype": "DocType",
+ "engine": "InnoDB",
+ "field_order": [
+  "reference_doctype",
+  "view",
+  "fieldname",
+  "label",
+  "enabled"
+ ],
+ "fields": [
+  {
+   "fieldname": "reference_doctype",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "DocType",
+   "options": "CRM Lead\nCRM Deal\nContact\nCRM Organization\nFCRM Note\nCRM Task\nEmployee Checkin\nAttendance Request\nShift Request\nShift Assignment\nLeave Application\nCompensatory Leave Request\nExpense Claim\nEmployee Advance\nSalary Slip\nPWA Notification\nEmployee",
+   "reqd": 1
+  },
+  {
+   "fieldname": "view",
+   "fieldtype": "Select",
+   "in_list_view": 1,
+   "label": "View",
+   "options": "List\nDetail",
+   "reqd": 1
+  },
+  {
+   "fieldname": "fieldname",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Fieldname",
+   "reqd": 1
+  },
+  {
+   "fieldname": "label",
+   "fieldtype": "Data",
+   "in_list_view": 1,
+   "label": "Label"
+  },
+  {
+   "default": "1",
+   "fieldname": "enabled",
+   "fieldtype": "Check",
+   "in_list_view": 1,
+   "label": "Enabled"
+  }
+ ],
+ "istable": 1,
+ "links": [],
+ "modified": "2026-11-19 12:00:00.000000",
+ "modified_by": "Administrator",
+ "module": "Sales Mobile",
+ "name": "Sales Mobile Field",
+ "owner": "Administrator",
+ "permissions": [],
+ "row_format": "Dynamic",
+ "sort_field": "creation",
+ "sort_order": "DESC",
+ "states": []
+}
