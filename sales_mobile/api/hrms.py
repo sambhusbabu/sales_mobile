@@ -7,7 +7,7 @@ permissions and workflows stay in HRMS.
 
 import frappe
 from frappe import _
-from frappe.utils import cint
+from frappe.utils import cint, flt, get_first_day, get_last_day, nowdate
 
 import sales_mobile.documents as documents
 from sales_mobile.access import (
@@ -36,8 +36,23 @@ def get_list(
 
 
 @frappe.whitelist()
+def get_list_filters(doctype: str):
+	"""Filter fields for an HR list. Standard list filters, plus document status when the DocType is submittable."""
+	_hrms(doctype)
+	return documents.list_filters(doctype)
+
+
+@frappe.whitelist()
 def get_doc(doctype: str, name: str):
 	return documents.get_doc(doctype, name, HRMS_DOCTYPES)
+
+
+@frappe.whitelist()
+def get_activities(doctype: str, name: str):
+	"""Full timeline for an HR document, in the same shape as a CRM timeline."""
+	from sales_mobile.activities import document_activity
+
+	return document_activity(doctype, name, HRMS_DOCTYPES)
 
 
 @frappe.whitelist()
@@ -164,6 +179,129 @@ def apply_checkin_rules(values: dict) -> dict:
 		values.pop("longitude", None)
 		values.pop("geolocation", None)
 	return values
+
+
+def _module_enabled(module: str) -> bool:
+	from sales_mobile.access import get_settings
+	from sales_mobile.registry import MODULES
+
+	return bool(get_settings().get(MODULES[module]))
+
+
+def _current_employee() -> str | None:
+	from hrms.api import get_current_employee
+
+	try:
+		return get_current_employee()
+	except frappe.PermissionError:
+		return None
+
+
+def _leave_balance_chart():
+	from hrms.api import get_leave_balance_map
+
+	rows = []
+	for leave_type, allocation in (get_leave_balance_map() or {}).items():
+		allocated = flt(allocation.get("allocated_leaves"))
+		balance = flt(allocation.get("balance_leaves"))
+		rows.append(
+			{
+				"leave_type": leave_type,
+				"allocated_leaves": allocated,
+				"balance_leaves": balance,
+				"balance_percentage": (balance / allocated * 100) if allocated else 0,
+			}
+		)
+	return {
+		"name": "leave_balance",
+		"type": "donut_chart",
+		"title": _("Leave balance"),
+		"categoryColumn": "leave_type",
+		"valueColumn": "balance_leaves",
+		"data": rows,
+	}
+
+
+def _expense_chart():
+	from hrms.api import get_expense_claim_summary
+
+	summary = get_expense_claim_summary()
+	approved = flt(summary.get("total_approved_amount"))
+	rejected = flt(summary.get("total_rejected_amount")) + (
+		flt(summary.get("total_claimed_in_approved")) - approved
+	)
+	return {
+		"name": "expense_claim_summary",
+		"type": "donut_chart",
+		"title": _("Expense claim summary"),
+		"currency": summary.get("currency"),
+		"categoryColumn": "status",
+		"valueColumn": "amount",
+		"data": [
+			{"status": "Pending", "amount": flt(summary.get("total_pending_amount"))},
+			{"status": "Approved", "amount": approved},
+			{"status": "Rejected", "amount": rejected},
+		],
+	}
+
+
+def _attendance_chart():
+	from hrms.api import get_attendance_calendar_events
+
+	start = get_first_day(nowdate())
+	end = get_last_day(nowdate())
+	counts: dict[str, int] = {}
+	for status in (get_attendance_calendar_events(start, end) or {}).values():
+		counts[status] = counts.get(status, 0) + 1
+	return {
+		"name": "attendance_this_month",
+		"type": "donut_chart",
+		"title": _("Attendance this month"),
+		"categoryColumn": "status",
+		"valueColumn": "count",
+		"data": [{"status": status, "count": count} for status, count in counts.items()],
+	}
+
+
+def _salary_chart(employee: str):
+	slip = frappe.get_list(
+		"Salary Slip",
+		filters={"employee": employee, "docstatus": 1},
+		fields=["year_to_date", "net_pay", "currency", "end_date"],
+		order_by="end_date desc",
+		limit=1,
+	)
+	if not slip:
+		return None
+	row = slip[0]
+	return {
+		"name": "salary_year_to_date",
+		"type": "number_chart",
+		"title": _("Year to date"),
+		"value": flt(row.year_to_date),
+		"suffix": row.currency,
+		"net_pay": flt(row.net_pay),
+		"end_date": row.end_date,
+	}
+
+
+@frappe.whitelist()
+def get_home_charts():
+	"""Charts for the HR home page. Each item uses the same shape as a CRM chart."""
+	require_access_user()
+	employee = _current_employee()
+	charts = []
+	if employee and _module_enabled("leave"):
+		charts.append(_leave_balance_chart())
+	if employee and _module_enabled("expense_claim"):
+		charts.append(_expense_chart())
+	if employee and _module_enabled("attendance"):
+		charts.append(_attendance_chart())
+	if employee and _module_enabled("salary_slip"):
+		salary = _salary_chart(employee)
+		if salary:
+			charts.append(salary)
+	return charts
 
 
 @frappe.whitelist()

@@ -19,6 +19,74 @@ def get_doc(doctype: str, name: str, allowed: dict):
 	return project(doctype, "Detail", doc.as_dict())
 
 
+_FILTER_TYPES = {
+	"Check",
+	"Data",
+	"Float",
+	"Int",
+	"Currency",
+	"Link",
+	"Select",
+	"Date",
+	"Datetime",
+	"Time",
+}
+
+_FALLBACK_FILTERS = (
+	"status",
+	"approval_status",
+	"leave_type",
+	"expense_type",
+	"log_type",
+	"shift_type",
+	"from_date",
+	"to_date",
+	"posting_date",
+	"time",
+)
+
+
+def filter_row(df) -> dict:
+	options = df.get("options") if isinstance(df, dict) else df.options
+	fieldtype = df.get("fieldtype") if isinstance(df, dict) else df.fieldtype
+	if fieldtype == "Select" and isinstance(options, str):
+		options = [{"label": option, "value": option} for option in options.split("\n") if option]
+	return {
+		"fieldname": df.get("fieldname") if isinstance(df, dict) else df.fieldname,
+		"label": df.get("label") if isinstance(df, dict) else df.label,
+		"fieldtype": fieldtype,
+		"options": options,
+	}
+
+
+def list_filters(doctype: str) -> list[dict]:
+	"""Fields for a list filter sheet. Standard filters first, otherwise a short fallback."""
+	meta = frappe.get_meta(doctype)
+	fields = [df for df in meta.fields if df.in_standard_filter and df.fieldtype in _FILTER_TYPES and not df.hidden]
+	if not fields:
+		by_name = {df.fieldname: df for df in meta.fields}
+		fields = [
+			by_name[name]
+			for name in _FALLBACK_FILTERS
+			if name in by_name and by_name[name].fieldtype in _FILTER_TYPES and not by_name[name].hidden
+		]
+	rows = [filter_row(df) for df in fields]
+	if meta.is_submittable and not any(row["fieldname"] == "docstatus" for row in rows):
+		rows.append(
+			{
+				"fieldname": "docstatus",
+				"label": "Document Status",
+				"fieldtype": "Select",
+				"options": [
+					{"label": "Draft", "value": 0},
+					{"label": "Submitted", "value": 1},
+					{"label": "Cancelled", "value": 2},
+				],
+			}
+		)
+	return rows
+
+
 def get_list(
 	doctype: str,
 	allowed: dict,

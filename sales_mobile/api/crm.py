@@ -55,6 +55,18 @@ def get_list(
 
 
 @frappe.whitelist()
+def get_list_filters(doctype: str):
+	"""Quick filters from the CRM list. Same fields the Vue list shows."""
+	_crm(doctype)
+	from crm.api.doc import get_quick_filters
+
+	rows = get_quick_filters(doctype) or []
+	if rows:
+		return [documents.filter_row(row) for row in rows]
+	return documents.list_filters(doctype)
+
+
+@frappe.whitelist()
 def get_doc(doctype: str, name: str):
 	return documents.get_doc(doctype, name, CRM_DOCTYPES)
 
@@ -101,6 +113,25 @@ def get_dashboard(from_date: str | None = None, to_date: str | None = None, user
 
 
 @frappe.whitelist()
+def get_home_charts(
+	from_date: str | None = None, to_date: str | None = None, user: str | None = None
+):
+	"""Every CRM dashboard chart, including series and points, without grid spacers."""
+	charts = []
+	for item in get_dashboard(from_date, to_date, user) or []:
+		if item.get("type") == "spacer" or not item.get("data"):
+			continue
+		chart = {"name": item.get("name"), "type": item.get("type")}
+		data = item.get("data")
+		if isinstance(data, dict):
+			chart.update(data)
+		else:
+			chart["data"] = data
+		charts.append(chart)
+	return charts
+
+
+@frappe.whitelist()
 def get_chart(
 	name: str,
 	type: str = "line",
@@ -123,18 +154,11 @@ def get_views(doctype: str):
 
 
 @frappe.whitelist()
-def get_activities(name: str):
-	"""Timeline for a lead or a deal. Notes and tasks are included by CRM."""
-	if frappe.db.exists("CRM Deal", name):
-		require_module("deal")
-	elif frappe.db.exists("CRM Lead", name):
-		require_module("lead")
-	else:
-		frappe.throw(_("Lead or Deal {0} not found").format(name), frappe.DoesNotExistError)
+def get_activities(doctype: str, name: str):
+	"""Full timeline. Leads and deals use the CRM activity API."""
+	from sales_mobile.activities import document_activity
 
-	from crm.api.activities import get_activities as _get_activities
-
-	return _get_activities(name)
+	return document_activity(doctype, name, CRM_DOCTYPES)
 
 
 @frappe.whitelist(methods=["POST"])
