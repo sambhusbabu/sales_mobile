@@ -129,6 +129,100 @@ def form_fields(doctype: str, allowed: dict) -> list[dict]:
 	return rows
 
 
+def meta_layout(doctype: str) -> list:
+	"""Tabs, sections, and columns from the DocType, in desk order."""
+	meta = frappe.get_meta(doctype)
+	tabs = []
+
+	def tab(label=None, name=None):
+		if tabs and label is None:
+			return tabs[-1]
+		tabs.append(
+			{
+				"name": name or "first_tab",
+				"label": label or "Details",
+				"sections": [],
+			}
+		)
+		return tabs[-1]
+
+	def section(current, label=None, name=None, hide_label=False):
+		if current["sections"] and label is None and name is None:
+			return current["sections"][-1]
+		current["sections"].append(
+			{
+				"name": name or f"section_{len(current['sections'])}",
+				"label": label,
+				"hideLabel": hide_label or not label,
+				"columns": [],
+			}
+		)
+		return current["sections"][-1]
+
+	def column(current, name=None):
+		if current["columns"] and name is None:
+			return current["columns"][-1]
+		current["columns"].append({"name": name or f"column_{len(current['columns'])}", "fields": []})
+		return current["columns"][-1]
+
+	for df in meta.fields:
+		if df.fieldtype == "Tab Break":
+			tab(df.label, df.fieldname)
+		elif df.fieldtype == "Section Break":
+			section(tab(), df.label, df.fieldname, hide_label=not df.label)
+		elif df.fieldtype == "Column Break":
+			column(section(tab()), df.fieldname)
+		else:
+			column(section(tab(), hide_label=True))["fields"].append(df.as_dict())
+
+	return tabs or [{"name": "first_tab", "label": "Details", "sections": []}]
+
+
+def layout_with_values(
+	tabs: list,
+	draft,
+	issubmittable: int,
+	allowed: set[str],
+	fieldtypes: set[str] | None = None,
+	skip_fieldnames: set[str] | None = None,
+) -> list:
+	"""Drop empty groups and replace each raw DocField default with the evaluated value."""
+	skip_fieldnames = skip_fieldnames or set()
+	prepared = []
+	for tab_row in tabs or []:
+		sections = []
+		for section_row in tab_row.get("sections") or []:
+			columns = []
+			for column_row in section_row.get("columns") or []:
+				fields = []
+				for field in column_row.get("fields") or []:
+					if not isinstance(field, dict) or not field.get("fieldname"):
+						continue
+					if field["fieldname"] in skip_fieldnames:
+						continue
+					if fieldtypes and field.get("fieldtype") not in fieldtypes:
+						continue
+					if allowed and field["fieldname"] not in allowed:
+						continue
+					field["issubmittable"] = issubmittable
+					value = draft.get(field["fieldname"])
+					if value is None or value == "":
+						field.pop("default", None)
+					else:
+						field["default"] = value
+					fields.append(field)
+				if fields:
+					column_row["fields"] = fields
+					columns.append(column_row)
+			if columns:
+				section_row["columns"] = columns
+				sections.append(section_row)
+		if sections:
+			tab_row["sections"] = sections
+			prepared.append(tab_row)
+	return prepared
+
+
 def doc_permissions(doctype: str, name: str, allowed: dict):
 	require_doctype(doctype, allowed)
 	from frappe.client import get_doc_permissions

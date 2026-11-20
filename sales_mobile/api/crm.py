@@ -8,7 +8,14 @@ import frappe
 from frappe import _
 
 import sales_mobile.documents as documents
-from sales_mobile.access import list_columns, project, require_access, require_doctype, require_module
+from sales_mobile.access import (
+	configured_fieldnames,
+	list_columns,
+	project,
+	require_access,
+	require_doctype,
+	require_module,
+)
 from sales_mobile.registry import CRM_DOCTYPES
 
 
@@ -53,8 +60,16 @@ def get_doc(doctype: str, name: str):
 
 
 @frappe.whitelist()
-def get_form_fields(doctype: str):
-	return documents.form_fields(doctype, CRM_DOCTYPES)
+def get_form_fields(doctype: str, type: str = "Quick Entry"):
+	"""Tabs, sections, and columns from the CRM Fields Layout the Vue app renders."""
+	_crm(doctype)
+	from crm.fcrm.doctype.crm_fields_layout.crm_fields_layout import get_fields_layout
+
+	tabs = get_fields_layout(doctype, type)
+	draft = frappe.new_doc(doctype)
+	issubmittable = 1 if frappe.get_meta(doctype).is_submittable else 0
+	allowed = set(configured_fieldnames(doctype, "Detail"))
+	return documents.layout_with_values(tabs, draft, issubmittable, allowed)
 
 
 @frappe.whitelist()

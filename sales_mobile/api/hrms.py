@@ -10,7 +10,13 @@ from frappe import _
 from frappe.utils import cint
 
 import sales_mobile.documents as documents
-from sales_mobile.access import parse_values, require_any_module, require_doctype, require_module
+from sales_mobile.access import (
+	configured_fieldnames,
+	parse_values,
+	require_any_module,
+	require_doctype,
+	require_module,
+)
 from sales_mobile.registry import HRMS_DOCTYPES, NOTIFICATION_FIELDS
 
 
@@ -36,7 +42,20 @@ def get_doc(doctype: str, name: str):
 
 @frappe.whitelist()
 def get_form_fields(doctype: str):
-	return documents.form_fields(doctype, HRMS_DOCTYPES)
+	"""Tabs, sections, and columns from the HR form, in the same shape as CRM."""
+	_hrms(doctype)
+	from hrms.api import SUPPORTED_FIELD_TYPES
+
+	meta = frappe.get_meta(doctype)
+	draft = frappe.new_doc(doctype)
+	return documents.layout_with_values(
+		documents.meta_layout(doctype),
+		draft,
+		1 if meta.is_submittable else 0,
+		set(configured_fieldnames(doctype, "Detail")),
+		fieldtypes=set(SUPPORTED_FIELD_TYPES),
+		skip_fieldnames={"amended_from"},
+	)
 
 
 @frappe.whitelist()
