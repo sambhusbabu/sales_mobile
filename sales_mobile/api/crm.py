@@ -23,6 +23,36 @@ def _crm(doctype: str):
 	require_doctype(doctype, CRM_DOCTYPES)
 
 
+_SEARCH_FIELDS = (
+	"name",
+	"full_name",
+	"lead_name",
+	"first_name",
+	"organization",
+	"organization_name",
+	"company_name",
+	"phone",
+	"mobile_no",
+	"email",
+	"email_id",
+	"title",
+)
+
+
+def _names_matching_search(doctype: str, text: str) -> list[str]:
+	"""Any of the contact fields may match. Fields the DocType does not have are skipped."""
+	meta = frappe.get_meta(doctype)
+	needle = "%" + text.replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_") + "%"
+	or_filters = [
+		[doctype, fieldname, "like", needle]
+		for fieldname in _SEARCH_FIELDS
+		if fieldname == "name" or meta.has_field(fieldname)
+	]
+	if not or_filters:
+		return []
+	return frappe.get_all(doctype, or_filters=or_filters, pluck="name", limit_page_length=0)
+
+
 @frappe.whitelist()
 def get_list(
 	doctype: str,
@@ -31,11 +61,16 @@ def get_list(
 	page_length: int = 20,
 	page_length_count: int = 20,
 	default_filters: dict | str | None = None,
+	search: str | None = None,
 ):
 	"""List view. Routes to crm.api.doc.get_data, which the CRM frontend uses."""
 	_crm(doctype)
 	if isinstance(filters, str):
 		filters = frappe.parse_json(filters)
+	search = (search or "").strip()
+	if search:
+		filters = dict(filters or {})
+		filters["name"] = ["in", _names_matching_search(doctype, search) or ["__none__"]]
 	columns, rows = list_columns(doctype)
 	from crm.api.doc import get_data
 

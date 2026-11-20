@@ -28,6 +28,10 @@
   "enable_notifications",
   "branding_tab",
   "app_name",
+  "login_text",
+  "login_subtitle",
+  "login_icon",
+  "login_image",
   "logo",
   "column_break_brand",
   "primary_color",
@@ -187,6 +191,31 @@
    "fieldname": "app_name",
    "fieldtype": "Data",
    "label": "App Name"
+  },
+  {
+   "default": "Welcome back",
+   "description": "Headline on the login screen.",
+   "fieldname": "login_text",
+   "fieldtype": "Data",
+   "label": "Login Text"
+  },
+  {
+   "description": "Line under the headline.",
+   "fieldname": "login_subtitle",
+   "fieldtype": "Small Text",
+   "label": "Login Subtitle"
+  },
+  {
+   "description": "Lucide name, used only when Login Image is empty. One of: briefcase, building, users, user, layout-dashboard, contact, home, bell, calendar, clock, wallet, banknote, receipt, file-text, id-card, user-plus.",
+   "fieldname": "login_icon",
+   "fieldtype": "Data",
+   "label": "Login Icon"
+  },
+  {
+   "description": "Public image URL, or a public file path such as /files/logo.png. Shown instead of the icon when set.",
+   "fieldname": "login_image",
+   "fieldtype": "Data",
+   "label": "Login Image"
   },
   {
    "fieldname": "logo",

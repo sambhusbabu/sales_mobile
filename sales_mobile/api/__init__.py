@@ -22,6 +22,35 @@ from sales_mobile.access import (
 from sales_mobile.registry import DOCTYPES
 
 
+@frappe.whitelist(allow_guest=True)
+def ping():
+	"""Guest check used by the app before it stores a site address. No login."""
+	return {"ok": 1, "app": "sales_mobile"}
+
+
+@frappe.whitelist(allow_guest=True)
+def get_login_branding():
+	"""Login screen copy. No session. Does not call require_access."""
+	row = frappe.db.get_value(
+		"Sales Mobile Settings",
+		"Sales Mobile Settings",
+		["app_name", "login_text", "login_subtitle", "login_icon", "login_image"],
+		as_dict=True,
+	) or {}
+
+	def clean(value):
+		text = (value or "").strip()
+		return text or None
+
+	return {
+		"app_name": clean(row.get("app_name")) or "Sales Mobile",
+		"login_text": clean(row.get("login_text")) or "Welcome back",
+		"login_subtitle": clean(row.get("login_subtitle")),
+		"icon": clean(row.get("login_icon")),
+		"image": clean(row.get("login_image")),
+	}
+
+
 @frappe.whitelist()
 def get_bootstrap(platform: str | None = None, app_version: str | None = None):
 	"""One call for the Expo app start: user, employee, settings, and update rule."""
