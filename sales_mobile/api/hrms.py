@@ -53,6 +53,8 @@ def has_permission(doctype: str, name: str = "", perm_type: str = "read"):
 def create_doc(doctype: str, values: dict | str):
 	if doctype == "PWA Notification":
 		frappe.throw(_("Notifications cannot be created from Sales Mobile"), frappe.PermissionError)
+	if doctype == "Employee Checkin":
+		values = apply_checkin_rules(parse_values(values))
 	return documents.create_doc(doctype, values, HRMS_DOCTYPES)
 
 
@@ -110,12 +112,74 @@ def require_access_user():
 	return require_access()
 
 
+def hr_settings() -> dict:
+	"""HR Settings flags the PWA reads. Geolocation is enforced on check-in."""
+	from hrms.api import get_hr_settings as _fn
+
+	raw = _fn()
+	return {
+		"allow_employee_checkin_from_mobile_app": bool(raw.allow_employee_checkin_from_mobile_app),
+		"allow_geolocation_tracking": bool(raw.allow_geolocation_tracking),
+		"prevent_self_leave_approval": bool(raw.prevent_self_leave_approval),
+		"enable_multi_currency_expense_claim": bool(raw.enable_multi_currency_expense_claim),
+	}
+
+
+def apply_checkin_rules(values: dict) -> dict:
+	"""Match Employee Checkin.validate_distance_from_shift_location.
+
+	When Allow Geolocation Tracking is on, latitude and longitude are required.
+	HRMS then rejects a punch outside the shift location radius. When it is off,
+	coordinates are dropped.
+	"""
+	settings = hr_settings()
+	if not settings["allow_employee_checkin_from_mobile_app"]:
+		frappe.throw(_("Check-in from the mobile app is turned off in HR Settings"))
+
+	values = dict(values)
+	if settings["allow_geolocation_tracking"]:
+		if not values.get("latitude") and not values.get("longitude"):
+			frappe.throw(_("Latitude and longitude values are required for checking in."))
+	else:
+		values.pop("latitude", None)
+		values.pop("longitude", None)
+		values.pop("geolocation", None)
+	return values
+
+
 @frappe.whitelist()
 def get_hr_settings():
 	require_access_user()
-	from hrms.api import get_hr_settings as _fn
+	return hr_settings()
 
-	return _fn()
+
+@frappe.whitelist(methods=["POST"])
+def employee_checkin(
+	log_type: str,
+	time: str,
+	latitude: float | str | None = None,
+	longitude: float | str | None = None,
+	device_id: str | None = None,
+):
+	"""Punch IN or OUT for the logged-in employee."""
+	require_module("attendance")
+	from hrms.api import get_current_employee_info
+
+	employee = get_current_employee_info()
+	if not employee:
+		frappe.throw(_("Employee not found"), frappe.PermissionError)
+
+	values = apply_checkin_rules(
+		{
+			"employee": employee.name,
+			"log_type": log_type,
+			"time": time,
+			"latitude": latitude,
+			"longitude": longitude,
+			"device_id": device_id,
+		}
+	)
+	return documents.create_doc("Employee Checkin", values, HRMS_DOCTYPES)
 
 
 @frappe.whitelist()
@@ -474,6 +538,51 @@ def get_transitions(doc: dict | str):
 	from frappe.model.workflow import get_transitions as _fn
 
 	return _fn(payload)
+
+
+@frappe.whitelist()
+def get_value(
+	doctype: str,
+	fieldname: str | list | dict,
+	filters: str | list | dict | None = None,
+	as_dict: int | bool = True,
+):
+	"""Same lookup the expense form uses for Employee.salary_currency."""
+	_hrms(doctype)
+	from frappe.client import get_value as _fn
+
+	return _fn(doctype, fieldname, filters, as_dict=as_dict)
+
+
+@frappe.whitelist(allow_guest=True)
+def get_user_pass_login_disabled():
+	from hrms.api.system_settings import get_user_pass_login_disabled as _fn
+
+	return _fn()
+
+
+@frappe.whitelist(methods=["POST"])
+def update_password(new_password: str, old_password: str, logout_all_sessions: int = 0):
+	require_access_user()
+	from frappe.core.doctype.user.user import update_password as _fn
+
+	return _fn(new_password, logout_all_sessions=logout_all_sessions, old_password=old_password)
+
+
+@frappe.whitelist(allow_guest=True, methods=["POST"])
+def reset_password(user: str):
+	from frappe.core.doctype.user.user import reset_password as _fn
+
+	return _fn(user)
+
+
+@frappe.whitelist()
+def are_push_notifications_enabled():
+	"""Frappe web-push relay flag used by the HRMS PWA. Expo push is `push.enabled` on bootstrap."""
+	require_access_user()
+	from hrms.api import are_push_notifications_enabled as _fn
+
+	return _fn()
 
 
 @frappe.whitelist(methods=["POST"])

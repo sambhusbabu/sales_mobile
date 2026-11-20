@@ -28,9 +28,12 @@ def get_bootstrap(platform: str | None = None, app_version: str | None = None):
 	settings = require_access()
 	from hrms.api import get_current_employee_info, get_current_user_info
 
+	from sales_mobile.api.hrms import hr_settings
+
 	return {
 		"user": get_current_user_info(),
 		"employee": get_current_employee_info(),
+		"hr_settings": hr_settings(),
 		"branding": branding_payload(settings),
 		"modules": modules_payload(settings),
 		"tabs": tabs_payload(settings),

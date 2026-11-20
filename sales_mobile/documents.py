@@ -89,9 +89,11 @@ def cancel_doc(doctype: str, name: str, allowed: dict):
 
 def form_fields(doctype: str, allowed: dict) -> list[dict]:
 	require_doctype(doctype, allowed)
+	meta = frappe.get_meta(doctype)
+	issubmittable = 1 if meta.is_submittable else 0
 	allowed_names = set(configured_fieldnames(doctype, "Detail"))
 	rows = []
-	for df in frappe.get_meta(doctype).fields:
+	for df in meta.fields:
 		if df.fieldtype in _SKIP_FIELDTYPES:
 			continue
 		if allowed_names and df.fieldname not in allowed_names:
@@ -104,12 +106,21 @@ def form_fields(doctype: str, allowed: dict) -> list[dict]:
 				"options": df.options,
 				"reqd": df.reqd,
 				"read_only": df.read_only,
+				"issubmittable": issubmittable,
 			}
 		)
 	if allowed_names:
 		for fieldname in ALWAYS_FIELDS & allowed_names:
 			if not any(row["fieldname"] == fieldname for row in rows):
-				rows.append({"fieldname": fieldname, "label": fieldname, "fieldtype": "Data", "reqd": 0})
+				rows.append(
+					{
+						"fieldname": fieldname,
+						"label": fieldname,
+						"fieldtype": "Data",
+						"reqd": 0,
+						"issubmittable": issubmittable,
+					}
+				)
 	return rows
 
 
