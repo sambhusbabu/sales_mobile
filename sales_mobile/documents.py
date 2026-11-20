@@ -90,6 +90,7 @@ def cancel_doc(doctype: str, name: str, allowed: dict):
 def form_fields(doctype: str, allowed: dict) -> list[dict]:
 	require_doctype(doctype, allowed)
 	meta = frappe.get_meta(doctype)
+	draft = frappe.new_doc(doctype)
 	issubmittable = 1 if meta.is_submittable else 0
 	allowed_names = set(configured_fieldnames(doctype, "Detail"))
 	rows = []
@@ -98,29 +99,33 @@ def form_fields(doctype: str, allowed: dict) -> list[dict]:
 			continue
 		if allowed_names and df.fieldname not in allowed_names:
 			continue
-		rows.append(
-			{
-				"fieldname": df.fieldname,
-				"label": df.label,
-				"fieldtype": df.fieldtype,
-				"options": df.options,
-				"reqd": df.reqd,
-				"read_only": df.read_only,
-				"issubmittable": issubmittable,
-			}
-		)
+		row = {
+			"fieldname": df.fieldname,
+			"label": df.label,
+			"fieldtype": df.fieldtype,
+			"options": df.options,
+			"reqd": df.reqd,
+			"read_only": df.read_only,
+			"issubmittable": issubmittable,
+		}
+		value = draft.get(df.fieldname)
+		if value is not None and value != "":
+			row["default"] = value
+		rows.append(row)
 	if allowed_names:
 		for fieldname in ALWAYS_FIELDS & allowed_names:
 			if not any(row["fieldname"] == fieldname for row in rows):
-				rows.append(
-					{
-						"fieldname": fieldname,
-						"label": fieldname,
-						"fieldtype": "Data",
-						"reqd": 0,
-						"issubmittable": issubmittable,
-					}
-				)
+				row = {
+					"fieldname": fieldname,
+					"label": fieldname,
+					"fieldtype": "Data",
+					"reqd": 0,
+					"issubmittable": issubmittable,
+				}
+				value = draft.get(fieldname)
+				if value is not None and value != "":
+					row["default"] = value
+				rows.append(row)
 	return rows
 
 
