@@ -132,6 +132,65 @@ def get_current_user_info():
 	return _fn()
 
 
+_USER_SECTIONS = (
+	{
+		"key": "user",
+		"title": "User",
+		"fields": (
+			"full_name",
+			"first_name",
+			"middle_name",
+			"last_name",
+			"username",
+			"email",
+			"gender",
+			"birth_date",
+		),
+	},
+	{
+		"key": "contact",
+		"title": "Contact",
+		"fields": ("mobile_no", "phone", "location"),
+	},
+	{
+		"key": "preferences",
+		"title": "Preferences",
+		"fields": ("language", "time_zone", "bio", "interest"),
+	},
+)
+
+
+@frappe.whitelist()
+def get_user_profile():
+	"""Display fields for the logged-in User. Password and API secrets are not included."""
+	require_access_user()
+	fieldnames = [fieldname for section in _USER_SECTIONS for fieldname in section["fields"]]
+	row = frappe.db.get_value("User", frappe.session.user, ["name", "user_image", *fieldnames], as_dict=True) or {}
+	meta = frappe.get_meta("User")
+	sections = []
+	for section in _USER_SECTIONS:
+		fields = []
+		for fieldname in section["fields"]:
+			df = meta.get_field(fieldname)
+			fields.append(
+				{
+					"fieldname": fieldname,
+					"label": df.label if df else fieldname,
+					"fieldtype": df.fieldtype if df else "Data",
+					"value": row.get(fieldname),
+				}
+			)
+		sections.append({"key": section["key"], "title": section["title"], "fields": fields})
+
+	return {
+		"name": row.get("name") or frappe.session.user,
+		"full_name": row.get("full_name"),
+		"user_image": row.get("user_image"),
+		"roles": frappe.get_roles(),
+		"sections": sections,
+	}
+
+
 @frappe.whitelist()
 def get_current_employee_info():
 	require_access_user()
@@ -353,6 +412,112 @@ def get_reports_to_employee_name(employee: str):
 	from hrms.api import get_reports_to_employee_name as _fn
 
 	return _fn(employee)
+
+
+_PROFILE_SECTIONS = (
+	{
+		"key": "employee_details",
+		"title": "Employee Details",
+		"icon": "user",
+		"fields": (
+			"employee_name",
+			"employee_number",
+			"gender",
+			"date_of_birth",
+			"date_of_joining",
+			"blood_group",
+		),
+	},
+	{
+		"key": "company",
+		"title": "Company Information",
+		"icon": "file-text",
+		"fields": (
+			"company",
+			"department",
+			"designation",
+			"branch",
+			"grade",
+			"reports_to",
+			"employment_type",
+		),
+	},
+	{
+		"key": "contact",
+		"title": "Contact Information",
+		"icon": "contact",
+		"fields": ("cell_number", "personal_email", "company_email", "preferred_email"),
+	},
+	{
+		"key": "salary",
+		"title": "Salary Information",
+		"icon": "banknote",
+		"fields": (
+			"ctc",
+			"payroll_cost_center",
+			"pan_number",
+			"provident_fund_account",
+			"salary_mode",
+			"bank_name",
+			"bank_ac_no",
+			"ifsc_code",
+			"micr_code",
+			"iban",
+		),
+	},
+)
+
+
+@frappe.whitelist()
+def get_employee_profile():
+	"""The HRMS profile page: the logged-in employee's details, grouped like the PWA."""
+	require_module("profile")
+	from hrms.api import get_current_employee_info, get_reports_to_employee_name
+
+	info = get_current_employee_info()
+	if not info:
+		frappe.throw(_("Employee not found"), frappe.PermissionError)
+
+	doc = frappe.get_doc("Employee", info.name)
+	meta = frappe.get_meta("Employee")
+	reports_to = get_reports_to_employee_name(doc.reports_to) if doc.reports_to else None
+	user = frappe.db.get_value(
+		"User",
+		frappe.session.user,
+		["full_name", "first_name", "user_image"],
+		as_dict=True,
+	) or {}
+
+	sections = []
+	for section in _PROFILE_SECTIONS:
+		rows = []
+		for fieldname in section["fields"]:
+			df = meta.get_field(fieldname)
+			if not df:
+				continue
+			value = doc.get(fieldname)
+			if fieldname == "employee_number" and not value:
+				value = doc.name
+			if fieldname == "reports_to" and reports_to:
+				value = reports_to
+			rows.append(
+				{
+					"fieldname": fieldname,
+					"label": df.label,
+					"fieldtype": df.fieldtype,
+					"value": value,
+				}
+			)
+		sections.append({"key": section["key"], "title": section["title"], "icon": section["icon"], "fields": rows})
+
+	return {
+		"name": doc.name,
+		"employee_name": doc.employee_name,
+		"designation": doc.designation,
+		"image": doc.image or user.get("user_image"),
+		"salary_currency": doc.salary_currency,
+		"sections": sections,
+	}
 
 
 @frappe.whitelist()
